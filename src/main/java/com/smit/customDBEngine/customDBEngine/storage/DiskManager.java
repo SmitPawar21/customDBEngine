@@ -11,8 +11,22 @@ public class DiskManager implements AutoCloseable {
 	// channel is connection or "pipe" to a file on disk
 	// Reason for having this variable as "final" - this is a permanent connection to ONE file. Also can't accidentally point to wrong file
 	private final FileChannel channel;
+	private final Path path;
 	
 	public DiskManager (Path path) throws IOException {
+		this.path = path;
+		try {
+            // Ensure parent directory exists
+            if (path.getParent() != null) {
+                Files.createDirectories(path.getParent());
+            }
+            // Ensure file exists
+            if (!Files.exists(path)) {
+                Files.createFile(path);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to initialize DB file at " + path, e);
+        }
 		channel = FileChannel.open(path, 
 					StandardOpenOption.CREATE,
 					StandardOpenOption.READ,

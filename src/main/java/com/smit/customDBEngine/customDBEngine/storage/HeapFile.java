@@ -38,6 +38,19 @@ public class HeapFile {
 		}
 	}
 	
+	public Iterable<Record> scan() throws IOException {
+		List<Record> results = new ArrayList<>();
+		
+		for(int pageId : pages) {
+			SlottedPage p = (SlottedPage) bp.getPage(pageId);
+			for(byte[] recBytes : p.getAllRecords()) {
+				results.add(new Record(recBytes));
+			}
+		}
+		
+		return results;
+	}
+	
 	
 
 }

@@ -1,5 +1,5 @@
 package com.smit.customDBEngine.customDBEngine.storage;
-
+import java.util.*;
 import java.nio.ByteBuffer;
 
 public class SlottedPage extends Page {
@@ -43,6 +43,66 @@ public class SlottedPage extends Page {
 		buf.putInt(4, newFreePtr);
 		
 		return true;
+	}
+	
+	public byte[] getRecord (int slotId) {
+		int numSlots = buf.getInt(0);
+		if(slotId < 0 || slotId >= numSlots) {
+			throw new IllegalArgumentException("Invalid slot id: "+ slotId);
+		}
+		
+		int slotPos = headerSize + slotId * 8;
+		int offset = buf.getInt(slotPos);
+		int len = buf.getInt(slotPos + 4);
+		
+		if(offset == -1) {
+			return null;
+		}
+		
+		byte[] data = new byte[len];
+		buf.position(offset);
+		buf.get(data, 0, len);
+		return data;
+	}
+	
+	public List<byte[]> getAllRecords () {
+		int numSlots = getNumSlots();
+		List<byte[]> records = new ArrayList<>(Math.max(0, numSlots));
+		
+		for(int i=0; i<numSlots; i++) {
+			byte[] rec = getRecord(i);
+			if(rec != null) {
+				records.add(rec);
+			}
+		}
+		
+		return records;
+	}
+	
+	public void deleteRecord(int slotId) {
+		int numSlots = buf.getInt(0);
+		if(slotId < 0 || slotId >= numSlots) {
+			throw new IllegalArgumentException("Invalid slot id: "+ slotId);
+		}
+		
+		int slotPos = headerSize + slotId * 8;
+		buf.putInt(slotPos, -1);
+		buf.putInt(slotPos + 4, 0);
+	}
+	
+	public boolean hasFreeSpace(int size) {
+		int numSlots = buf.getInt(0);
+		int freeptr = buf.getInt(4);
+		
+		int slotDirEnd = headerSize + numSlots * 8;
+		int required = size + 8;
+		int freespace = freeptr - slotDirEnd;
+		
+		return freespace >= required;
+	}
+	
+	public int getNumSlots () {
+		return buf.getInt(0);
 	}
 	
 }
