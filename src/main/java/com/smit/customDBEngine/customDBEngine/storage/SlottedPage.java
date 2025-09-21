@@ -90,6 +90,48 @@ public class SlottedPage extends Page {
 		buf.putInt(slotPos + 4, 0);
 	}
 	
+	public boolean updateRecord(int slotId, byte[] data) {
+	    int numSlots = buf.getInt(0);
+	    int freePtr = buf.getInt(4);
+
+	    if (slotId < 0 || slotId >= numSlots) {
+	        throw new IllegalArgumentException("Invalid slot id: " + slotId);
+	    }
+
+	    int slotPos = headerSize + slotId * 8;
+	    int oldOffset = buf.getInt(slotPos);
+	    int oldLen = buf.getInt(slotPos + 4);
+
+	    // if new data fits in old space → overwrite in place
+	    if (data.length <= oldLen) {
+	        buf.position(oldOffset);
+	        buf.put(data);
+	        buf.putInt(slotPos + 4, data.length); // update length
+	        return true;
+	    }
+
+	    // otherwise allocate new space at freePtr
+	    int slotDirEnd = headerSize + numSlots * 8;
+	    int freeSpace = freePtr - slotDirEnd;
+
+	    if (freeSpace < data.length) {
+	        return false; // not enough free space
+	    }
+
+	    int newFreePtr = freePtr - data.length;
+	    buf.position(newFreePtr);
+	    buf.put(data);
+
+	    // update *this slot*, not a new one
+	    buf.putInt(slotPos, newFreePtr);
+	    buf.putInt(slotPos + 4, data.length);
+
+	    // update freePtr
+	    buf.putInt(4, newFreePtr);
+
+	    return true;
+	}
+	
 	public boolean hasFreeSpace(int size) {
 		int numSlots = buf.getInt(0);
 		int freeptr = buf.getInt(4);

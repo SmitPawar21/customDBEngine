@@ -38,6 +38,29 @@ public class HeapFile {
 		}
 	}
 	
+	public boolean update(int pageIndex, int slotId, byte[] newData) throws IOException {
+        if (pageIndex < 0 || pageIndex >= pages.size()) {
+            throw new IllegalArgumentException("Invalid page index: " + pageIndex);
+        }
+
+        SlottedPage p = (SlottedPage) bp.getPage(pages.get(pageIndex));
+        boolean success = p.updateRecord(slotId, newData);
+        if (success) {
+            bp.markDirty(p.getPageId());
+        }
+        return success;
+    }
+	
+    public void delete(int pageIndex, int slotId) throws IOException {
+        if (pageIndex < 0 || pageIndex >= pages.size()) {
+            throw new IllegalArgumentException("Invalid page index: " + pageIndex);
+        }
+
+        SlottedPage p = (SlottedPage) bp.getPage(pages.get(pageIndex));
+        p.deleteRecord(slotId);
+        bp.markDirty(p.getPageId());
+    }
+	
 	public Iterable<Record> scan() throws IOException {
 		List<Record> results = new ArrayList<>();
 		

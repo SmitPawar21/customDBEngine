@@ -6,9 +6,7 @@ import com.smit.customDBEngine.customDBEngine.storage.BufferPool;
 import com.smit.customDBEngine.customDBEngine.storage.DiskManager;
 import com.smit.customDBEngine.customDBEngine.storage.HeapFile;
 import com.smit.customDBEngine.customDBEngine.storage.Record;
-/**
- * Hello world!2
- */
+
 public class App {
     public static void main(String[] args) {
         System.out.println("Hello World!");
@@ -20,10 +18,23 @@ public class App {
         	
         	hf.insert("Smit".getBytes());
         	hf.insert("Pawar".getBytes());
+        	hf.insert("Diksha".getBytes());
+        	hf.insert("Prajakti".getBytes());
         	
+        	System.out.println("initial insertion: ");
         	for(Record r : hf.scan()) {
         		System.out.println(r.asString());
         	}
+        	
+        	hf.update(0, 0, "Vinod Pawar".getBytes());
+        	
+        	hf.delete(0, 1);
+        	
+        	System.out.println("After Updation and Deletion: ");
+        	for(Record r : hf.scan()) {
+        		System.out.println(r.asString());
+        	}
+        	
         } catch (Exception e) {
         	System.out.println(e);
         }
